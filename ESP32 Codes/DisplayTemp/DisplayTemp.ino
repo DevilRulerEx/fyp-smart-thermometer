@@ -4,6 +4,17 @@
 // Pause in milliseconds between screens, change to 0 to time font rendering
 #define WAIT 2000
 
+// Wifi Connection
+#include <WiFi.h>
+//const char* ssid     = "Chng's Family";
+//const char* password = "werty113";
+const char* ssid     = "NTUSECURE";
+const char* password = "!Werty113";
+WiFiClient client;
+char server[] = "192.168.1.93";
+unsigned long dataPreviousTime = 0;
+const long dataInterval = 10000;
+
 //OLED display
 #include <TFT_eSPI.h> // Graphics and font library for ST7735 driver chip
 #include <SPI.h>
@@ -15,6 +26,8 @@ const long interval = 2000; //The 'delay' time.
 #include <Wire.h>
 #include <Adafruit_MLX90614.h>
 Adafruit_MLX90614 mlx = Adafruit_MLX90614();
+String read_temperature="";
+String send_temperature="";
 
 //Barcode Scanner
 //#include <Arduino.h>
@@ -36,7 +49,13 @@ void setup(void) {
   
   inputString.reserve(50);
 
-  Serial.println("Code Set Up!");
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.println("Connecting to WiFi..");
+  }
+  Serial.println("Connected to the WiFi network");
+
 }
 
 void loop() {
@@ -47,11 +66,20 @@ void loop() {
     Serial.println("String Complete!");
     inputName = inputString;
     inputString = "";
+    send_temperature = read_temperature;
     stringComplete = false;
     countstr=0;
    }
+//  if (inputName != NULL){
+//    send_temp_to_server();
+//    inputName = "";
+//  }
+   
   drawInformation();
 
+//  send_temp_to_server();
+//  send_fixed_data_to_server();
+  delay(20000);
   
 //  targetTime = millis();
 
@@ -86,6 +114,35 @@ void serialScanerEvent() {
     }
   }
 }
+
+void send_temp_to_server() {
+  client.stop();
+  unsigned long dataCurrentTime = millis();
+  
+  if (client.connect(server, 80)) {    
+    Serial.println("connected");
+    //Make a HTTP request:
+    String str="/get_temperature.php?inputName=";
+    str+=inputName;
+    str+="&send_temperature="+send_temperature;
+    Serial.print("str=");Serial.println(str);
+  
+    client.println("GET "+str+" HTTP/1.1");
+    client.println("Host: 192.168.1.93");
+    client.println("Connection: close");
+    client.println();
+
+//    delay(10);
+//    if (dataCurrentTime - dataPreviousTime >= dataInterval){
+//
+//    }
+  } else {
+    Serial.println("connection failed");
+  }
+
+  
+}
+
 void drawInformation() {
   unsigned long currentMillis = millis();
   if (currentMillis - targetTime >= interval) {
@@ -99,6 +156,36 @@ void drawInformation() {
     tft.drawString("ID:", 0, 48, 4);
     tft.drawString("S1234567A", 0, 72, 2);
     tft.drawString("Temperature:", 0, 96, 4);
-    tft.drawString(String(mlx.readObjectTempC()), 0, 120, 2);
+    
+    read_temperature = String(mlx.readObjectTempC());
+    tft.drawString(read_temperature, 0, 120, 2);
+    //tft.drawString(String(mlx.readObjectTempC()), 0, 120, 2);
+  }
+}
+
+void send_fixed_data_to_server(){
+  client.stop();
+  unsigned long dataCurrentTime = millis();
+  
+  if (client.connect(server, 80)) {    
+    Serial.println("connected");
+    //Make a HTTP request:
+    String str="/get_temperature.php?inputName=";
+    str+="TestName";
+    str+="&send_temperature=";
+    str+="3.1";
+    Serial.print("str=");Serial.println(str);
+  
+    client.println("GET "+str+" HTTP/1.1");
+    client.println("Host: 192.168.1.93");
+    client.println("Connection: close");
+    client.println();
+
+//    delay(10);
+//    if (dataCurrentTime - dataPreviousTime >= dataInterval){
+//
+//    }
+  } else {
+    Serial.println("connection failed");
   }
 }
