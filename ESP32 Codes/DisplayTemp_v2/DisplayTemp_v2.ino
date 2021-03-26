@@ -6,12 +6,13 @@
 
 // Wifi Connection
 #include <WiFi.h>
-const char* ssid     = "Chng's Family";
+//const char* ssid     = "Chng's Family";
+//const char* password = "werty113";
+const char* ssid     = "Chng Laptop";
 const char* password = "werty113";
-//const char* ssid     = "NTUSECURE";
-//const char* password = "!Werty113";
 WiFiClient client;
-char server[] = "192.168.1.93";
+//char server[] = "192.168.1.93"; //My Home IP
+char server[] = "192.168.137.1"; //NTU IP
 unsigned long dataPreviousTime = 0;
 const long dataInterval = 10000;
 
@@ -53,26 +54,34 @@ int lastRecordState = HIGH;
 unsigned long lastRecordTime = 0;  // the last time the output pin was toggled
 unsigned long recordDelay = 50;    // the debounce time; increase if the output flickers
 
-const int buttonClear = 13;
+const int buttonClear = 12;
 int clearState;
 int lastClearState = HIGH;
 unsigned long lastClearTime = 0;  // the last time the output pin was toggled
 unsigned long clearDelay = 50;    // the debounce time; increase if the output flickers
 
+const int buttonScan = 15;
+int scanState;
+int lastScanState = HIGH;
+unsigned long lastScanTime = 0;  // the last time the output pin was toggled
+unsigned long scanDelay = 50;    // the debounce time; increase if the output flickers
+
 
 void setup(void) {
   Serial.begin(9600);
-  Serial2.begin(9600, SERIAL_8N1, 25, 26); //25 is TX, 26 is RX
+  Serial2.begin(9600, SERIAL_8N1, 25, 26); //25 is TX (Black), 26 is RX (Yellow)
 
   tft.init();
   tft.setRotation(45); //Set to 0 for portrait, 45 for landscape.
   
-  mlx.begin(); //22 is SCL, 21 is SDA
+  mlx.begin(); //22 is SCL (Yellow), 21 is SDA (Green)
   
   inputString.reserve(20);
 
   pinMode(buttonSend, INPUT_PULLUP);
   pinMode(buttonRecord, INPUT_PULLUP);
+  pinMode(buttonClear, INPUT_PULLUP);
+  pinMode(buttonScan, INPUT_PULLUP);
 
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
@@ -96,11 +105,24 @@ void loop() {
   if (recordReading != lastRecordState) {
     // reset the debouncing timer
     lastRecordTime = millis();
-  }  
-  
+  }
+
+  int clearReading = digitalRead(buttonClear);
+  if (clearReading != lastClearState) {
+    // reset the debouncing timer
+    lastClearTime = millis();
+  }    
+
+  int scanReading = digitalRead(buttonScan);
+  if (scanReading != lastScanState) {
+    // reset the debouncing timer
+    lastScanTime = millis();
+  }
   serialScanerEvent();
   sendState = digitalRead(buttonSend);
   recordState = digitalRead(buttonRecord);
+  clearState = digitalRead(buttonClear);
+  scanState = digitalRead(buttonScan);
   
   if (stringComplete) {
     Serial.println(inputString);
@@ -143,11 +165,37 @@ void loop() {
       }
     }
   }  
+
+  //Clearing the data
+  if ((millis() - lastClearTime) > clearDelay) {
+    if (clearReading != clearState) {
+      clearState = clearReading;
+      if (clearState == LOW) {
+        Serial.println("Clear button Pressed");
+        status_message = "Data Cleared!";
+        clear_data();
+      }
+    }
+  }
+
+  //Scanning the Name/ID
+  if ((millis() - lastScanTime) > scanDelay) {
+    if (scanReading != scanState) {
+      scanState = scanReading;
+      if (scanState == LOW) {
+        Serial.println("Scan button Pressed");
+        status_message = "Scanner activated!";
+        
+      }
+    }
+  }  
      
   drawInformation();
 
   lastSendState = sendReading;
   lastRecordState = recordReading;
+  lastClearState = clearReading;
+
 }
 
 void serialScanerEvent() {
@@ -167,7 +215,8 @@ void serialScanerEvent() {
   }
 }
 
-
+//Read temperature when button is pressed
+//S2-B6 Robotics Lab
 
 void drawInformation() {
   unsigned long currentMillis = millis();
@@ -179,9 +228,9 @@ void drawInformation() {
   
     tft.drawString("Name or ID:", 0, 0, 4);
     tft.drawString(inputName, 0, 24, 2);
-    tft.drawString("Temperature: "+send_temperature, 0, 48, 4);
+    tft.drawString("Temperature: "+send_temperature+"°C", 0, 48, 4);
     read_temperature = String(mlx.readObjectTempC());
-    tft.drawString("Reading: "+read_temperature, 0, 72, 4);
+    tft.drawString("Reading: "+read_temperature+"°C", 0, 72, 4);
     //tft.drawString("Reading:", 0, 96, 4);
     tft.setTextColor(TFT_RED, TFT_BLACK);
     tft.drawString(status_message, 0, 120, 2);
@@ -202,7 +251,8 @@ void send_temp_to_server() {
     Serial.print("str=");Serial.println(str);
   
     client.println("GET "+str+" HTTP/1.1");
-    client.println("Host: 192.168.1.93");
+//    client.println("Host: 192.168.1.93"); //HOME
+    client.println("Host: 192.168.137.1"); //NTU
     client.println("Connection: close");
     client.println();
 
@@ -219,6 +269,7 @@ void clear_data(){
   send_temperature = "";
 }
 
+//TEST FUNCTION
 void send_fixed_data_to_server(){
   client.stop();
   unsigned long dataCurrentTime = millis();
@@ -227,14 +278,15 @@ void send_fixed_data_to_server(){
     Serial.println("connected");
     //Make a HTTP request:
     String str="/get_temperature.php?inputName=";
-    str+="TestName";
-//    str+="&send_temperature=";
-//    str+="3.1";
-    str+="&send_temperature="+send_temperature;
+    str+="TestFixedName";
+    str+="&send_temperature=";
+    str+="3.1";
+//    str+="&send_temperature="+send_temperature;
     Serial.print("str=");Serial.println(str);
   
     client.println("GET "+str+" HTTP/1.1");
-    client.println("Host: 192.168.1.93");
+//    client.println("Host: 192.168.1.93"); //HOME
+    client.println("Host: 192.168.137.1"); //NTU
     client.println("Connection: close");
     client.println();
 
