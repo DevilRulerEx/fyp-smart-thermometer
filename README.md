@@ -9,4 +9,6 @@ Components used:
 * GM65 Barcode Scanner
 * MLX90614 Temperature Sensor
 
-[LilyGo ESP32](url)
+![LilyGo TTGO Pin Diagram](Component%20Information/LilyGo%20TTGO%20T-Display%20ESP32/LilyGo%20TTGO%20Pin%20Diagram.png)
+<img src="Component%20Information/MG65%20Barcode%20Scanner/pic02.jpg" width=47% align="left"/>
+<img src="Component%20Information/MLX90614%20Temperature%20Sensor/pic01.jpg" width=47% align="right"/>
