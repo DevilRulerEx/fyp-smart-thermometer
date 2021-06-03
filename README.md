@@ -6,11 +6,25 @@ This project is done in accordance to the fufillment of an Electrical Engineerin
 
 You may also reached me on my [LinkedIn](https://www.linkedin.com/in/wee-ping-chng-34841320b/).
 
-Components used:
+## Components used:
 * ESP32 (LilyGo TTGO T-Display ESP32 CP2104) [Link to store page](https://sea.banggood.com/TTGO-T-Display-ESP32-CP2104-WiFi-bluetooth-Module-1_14-Inch-LCD-Development-Board-LILYGO-for-Arduino-products-that-work-with-official-Arduino-boards-p-1522925.html?rmmds=myorder&cur_warehouse=GWTR)
 * GM65 Barcode Scanner
 * MLX90614 Temperature Sensor
 
 ![LilyGo TTGO Pin Diagram](Component%20Information/LilyGo%20TTGO%20T-Display%20ESP32/LilyGo%20TTGO%20Pin%20Diagram.png)
-<img src="Component%20Information/MG65%20Barcode%20Scanner/pic03.png" width=47% align="left"/>
+<img src="Component%20Information/MG65%20Barcode%20Scanner/pic03.png" width=47%/>
 <img src="Component%20Information/MLX90614%20Temperature%20Sensor/pic01.jpg" width=47% align="right"/>
+
+## Software used:
+* Arduino IDE
+* XAMPP
+* PhpMyAdmin
+
+<img src="Misc%20Images/arduino.png" width=40% align="left"/>
+<img src="Misc%20Images/xamp.jpg" width=40% align="right"/>
+
+<img src="Misc%20Images/phpmyadmin.png" width=50%/>
+
+(TBC)
+
+<img src="Project%20Information/Circuit%20Diagram%20Sketch%202.png"/>
