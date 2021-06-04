@@ -6,6 +6,12 @@ This project is done in accordance to the fufillment of an Electrical Engineerin
 
 You may also reached me on my [LinkedIn](https://www.linkedin.com/in/wee-ping-chng-34841320b/).
 
+## The project prototype
+
+(Breif description)
+
+(Pictures, Videos)
+
 ## Components used:
 * ESP32 (LilyGo TTGO T-Display ESP32 CP2104) [Link to store page](https://sea.banggood.com/TTGO-T-Display-ESP32-CP2104-WiFi-bluetooth-Module-1_14-Inch-LCD-Development-Board-LILYGO-for-Arduino-products-that-work-with-official-Arduino-boards-p-1522925.html?rmmds=myorder&cur_warehouse=GWTR)
 * GM65 Barcode Scanner
@@ -25,6 +31,15 @@ You may also reached me on my [LinkedIn](https://www.linkedin.com/in/wee-ping-ch
 
 <img src="Misc%20Images/phpmyadmin.png" width=50%/>
 
-(TBC)
+## Setting up the project
+If you are already experienced in Arduino project (and I recommend starting with Arduinos projects first before delving into ESP32), programming an ESP32 can be familiar with you, but some setup are required in the Arduino IDE before you can program. Follow the steps in this page to setup the Arduino IDE [(Installing ESP32 in Arduino IDE)](https://randomnerdtutorials.com/installing-the-esp32-board-in-arduino-ide-windows-instructions/)
+
+For data collection purposes, I used XAMPP to create a local host server to store all the temperature records. Of course you could use your own web servers.
+
+If you are using the same componenets as I did, include the following libraries in Arduino IDE. Under Tools, set the board to be "TTGO LoRa32-OLED V1".
+
+<img src="Misc%20Images/boardmanager.png"/>
+<img src="Misc%20Images/tft_espi.png"/>
+<img src="Misc%20Images/mlxlibrary.png"/>
 
 <img src="Project%20Information/Circuit%20Diagram%20Sketch%202.png"/>
