@@ -6,13 +6,10 @@
 
 // Wifi Connection
 #include <WiFi.h>
-//const char* ssid     = "Chng's Family";
-//const char* password = "werty113";
-const char* ssid     = "Chng Laptop";
-const char* password = "werty113";
+const char* ssid     = "<Your wifi/hotspot network name>";
+const char* password = "<Your password for the wifi/hotspot>";
 WiFiClient client;
-//char server[] = "192.168.1.93"; //My Home IP
-char server[] = "192.168.137.1"; //NTU IP
+char server[] = "<IP Address>";
 unsigned long dataPreviousTime = 0;
 const long dataInterval = 10000;
 
@@ -30,6 +27,8 @@ String status_message="";
 Adafruit_MLX90614 mlx = Adafruit_MLX90614();
 String read_temperature="";
 String send_temperature="";
+boolean tempComplete = false;
+float temp_offset = 3.0;
 
 //Barcode Scanner
 //#include <Arduino.h>
@@ -58,7 +57,7 @@ const int buttonClear = 12;
 int clearState;
 int lastClearState = HIGH;
 unsigned long lastClearTime = 0;  // the last time the output pin was toggled
-unsigned long clearDelay = 50;    // the debounce time; increase if the output flickers
+unsigned long clearDelay = 0;    // the debounce time; increase if the output flickers
 
 const int buttonScan = 15;
 int scanState;
@@ -130,41 +129,37 @@ void loop() {
     inputName = String(inputString);
     inputName.replace(" ","_");
     inputName.trim();
-    status_message = "ID Recorded!";
+//    status_message = "ID Recorded!";
     inputString = "";
-    //send_temperature = read_temperature;
     stringComplete = false;
     countstr=0;
+    if (inputName != NULL)
+    {
+      status_message = "ID Recorded!";
+    }
   }
 
   //Sending the data
   if ((millis() - lastSendTime) > sendDelay) {
     if (sendReading != sendState) {
       sendState = sendReading;
-      if (sendState == LOW && inputName != NULL && send_temperature != NULL) {
-//      if (sendState == LOW) {
-        Serial.println("Send button Pressed");
-        status_message ="Sending data...";
-        send_temp_to_server();
-        clear_data();
-      }
       if (sendState == LOW && inputName == NULL || send_temperature == NULL) {
         status_message = "Missing inputs!";
       }
     }
   }
+  if (sendState == LOW && inputName != NULL && send_temperature != NULL) {
+    Serial.println("Send button Pressed");
+    status_message = "Attempting to send data...";
+    send_temp_to_server();
+  }
 
-  //Reading the data
-  if ((millis() - lastRecordTime) > recordDelay) {
-    if (recordReading != recordState) {
-      recordState = recordReading;
-      if (recordState == LOW) {
-        Serial.println("Record button Pressed");
-        status_message = "Temp Recorded!";
-        send_temperature = read_temperature;
-      }
-    }
-  }  
+  //Record Temperature
+  if (tempComplete && recordState == HIGH){
+    Serial.println("Temperature Recorded!");
+    status_message = "Temperature Recorded!";
+    tempComplete = false;
+  }
 
   //Clearing the data
   if ((millis() - lastClearTime) > clearDelay) {
@@ -177,18 +172,6 @@ void loop() {
       }
     }
   }
-
-  //Scanning the Name/ID
-  if ((millis() - lastScanTime) > scanDelay) {
-    if (scanReading != scanState) {
-      scanState = scanReading;
-      if (scanState == LOW) {
-        Serial.println("Scan button Pressed");
-        status_message = "Scanner activated!";
-        
-      }
-    }
-  }  
      
   drawInformation();
 
@@ -215,9 +198,6 @@ void serialScanerEvent() {
   }
 }
 
-//Read temperature when button is pressed
-//S2-B6 Robotics Lab
-
 void drawInformation() {
   unsigned long currentMillis = millis();
   if (currentMillis - targetTime >= interval) {
@@ -228,10 +208,23 @@ void drawInformation() {
   
     tft.drawString("Name or ID:", 0, 0, 4);
     tft.drawString(inputName, 0, 24, 2);
-    tft.drawString("Temperature: "+send_temperature+"°C", 0, 48, 4);
-    read_temperature = String(mlx.readObjectTempC());
-    tft.drawString("Reading: "+read_temperature+"°C", 0, 72, 4);
-    //tft.drawString("Reading:", 0, 96, 4);
+
+    tft.drawString("Temperature: ", 0, 48, 4);
+    tft.setTextSize(2);
+    read_temperature = String(mlx.readObjectTempC()+temp_offset);
+    tft.drawString(send_temperature+"°C", 0, 72, 4);
+
+    if (recordState == LOW) {
+      Serial.println("Record button Pressed");
+      status_message = "Recording temperature....";
+      send_temperature = read_temperature;
+      tempComplete = true;
+      tft.setTextColor(TFT_YELLOW, TFT_BLACK);
+      tft.drawString(read_temperature+"°C", 0, 72, 4);
+    }
+     
+
+    tft.setTextSize(1);
     tft.setTextColor(TFT_RED, TFT_BLACK);
     tft.drawString(status_message, 0, 120, 2);
   }
@@ -244,57 +237,27 @@ void send_temp_to_server() {
   if (client.connect(server, 80)) {    
     Serial.println("connected");
     //Make a HTTP request:
-    String str="/get_temperature.php?inputName=";
+    String str="/get_temperature.php?inputName=";  //Calling the PHP file.
     String str2=String(inputName);
     str+=str2;
     str+="&send_temperature="+send_temperature;
     Serial.print("str=");Serial.println(str);
   
     client.println("GET "+str+" HTTP/1.1");
-//    client.println("Host: 192.168.1.93"); //HOME
-    client.println("Host: 192.168.137.1"); //NTU
+    client.println("Host: " + server); 
     client.println("Connection: close");
     client.println();
 
     status_message = "Data sent!";
+    clear_data();
 
   } else {
+    status_message = "Connection failed";
     Serial.println("connection failed");
-    status_message = "Connection failed!";
   }
 }
 
 void clear_data(){
   inputName = "";
   send_temperature = "";
-}
-
-//TEST FUNCTION
-void send_fixed_data_to_server(){
-  client.stop();
-  unsigned long dataCurrentTime = millis();
-  
-  if (client.connect(server, 80)) {    
-    Serial.println("connected");
-    //Make a HTTP request:
-    String str="/get_temperature.php?inputName=";
-    str+="TestFixedName";
-    str+="&send_temperature=";
-    str+="3.1";
-//    str+="&send_temperature="+send_temperature;
-    Serial.print("str=");Serial.println(str);
-  
-    client.println("GET "+str+" HTTP/1.1");
-//    client.println("Host: 192.168.1.93"); //HOME
-    client.println("Host: 192.168.137.1"); //NTU
-    client.println("Connection: close");
-    client.println();
-
-//    delay(10);
-//    if (dataCurrentTime - dataPreviousTime >= dataInterval){
-//
-//    }
-  } else {
-    Serial.println("connection failed");
-  }
 }
